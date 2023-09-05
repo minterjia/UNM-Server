@@ -9,11 +9,14 @@ router.get("/", async (ctx) => {
 
 // 测试
 router.get("/test", async (ctx) => {
-  const data = await match(1962165898, ["kugou", "kuwo", "migu"]).then(
-    (res) => {
-      return res;
-    }
-  );
+  const data = await match(1962165898, [
+    "kugou",
+    "kuwo",
+    "migu",
+    "pyncmd",
+  ]).then((res) => {
+    return res;
+  });
   ctx.body = {
     code: 200,
     message: "获取成功",
@@ -27,7 +30,7 @@ router.get("/match", async (ctx) => {
     const id = ctx.request.query.id;
     const server = ctx.request.query.server
       ? ctx.request.query.server.split(",")
-      : ["kuwo", "kugou", "bilibili"];
+      : ["kugou", "kuwo", "migu", "bilibili", "pyncmd"];
     console.log("开始匹配：" + id + " - " + server);
     if (!id) {
       ctx.body = { code: 400, message: "参数不完整" };
@@ -37,6 +40,11 @@ router.get("/match", async (ctx) => {
     const data = await match(id, server).then((res) => {
       return res;
     });
+    // 反代
+    const proxy = process.env.PROXY_URL;
+    if (proxy && data.url.includes("kuwo")) {
+      data.proxyUrl = proxy + data.url.replace(/^http:\/\//, "http/");
+    }
     ctx.body = {
       code: 200,
       message: "匹配成功",
